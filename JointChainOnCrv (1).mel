@@ -1,0 +1,55 @@
+global proc JointChainOnCrv(int $JointNo, string $Curve)
+{
+    int $CVs = `getAttr ($Curve+".degree")` + `getAttr ($Curve+".spans")`;
+    print ("CVs = "+$CVs+"\n");
+    
+    $JointNo -= 1;
+    print ("JointNo = "+$JointNo+"\n");
+    
+    string $Dup_Crv[] = `rebuildCurve -rpo 0 -d 3 -rt 0 -s $JointNo -n "spine_Crv" $Curve`;
+    int $DupCrv_Cvs = `getAttr ($Dup_Crv[0]+".degree")` + `getAttr ($Dup_Crv[0]+".spans")`;
+    
+    int $DupCrv_Spans = `getAttr ($Dup_Crv[0]+".spans")`;
+    
+    float $Crv_Len = `arclen $Dup_Crv[0]`;
+    print ("Crv_Len = "+$Crv_Len+"\n");
+    
+    //float $increment = $Crv_Len/$JointNo;
+    //float $increment = 1.0/$JointNo;
+    //print ("increment = "+$increment+"\n");
+    //float $Pos[];
+    string $DupCrv_Shape[] = `listRelatives -s $Dup_Crv[0]`;
+    print $DupCrv_Shape[0];
+    
+    float $min = `getAttr ($DupCrv_Shape[0]+".minValue")`;
+    float $max = `getAttr ($DupCrv_Shape[0]+".maxValue")`;
+    
+    print ("Min = "+$min+"\n");
+    print ("Max = "+$max+"\n");
+    
+    float $increment = $max/$JointNo;
+    print ("increment = "+$increment+"\n");
+    float $const = 1.0/$max;
+    //float $const = $increment/$max;
+    //float $const = 1.0/$Crv_Len;
+    string $JntChain[];
+    
+    for($i = 0; $i <= $JointNo; $i++)
+    {
+        //float $para = $min + (($max - $min)*($i/(float)$JointNo));
+        float $para = ($min + ($increment*$i));// when using this //float $const = 1.0/$max; // To conert to 0 - 1 range // remove $const variable to get range between 0 - 6
+        //float $para = ($min + ($increment*$i))*$const;// when using this //float $const = 1.0/$Crv_Len; // To conert to 0 - 1 range // remove $const variable to get range between 0 - 6
+        print ("Para = "+$para+"\n");
+        float $Pos[] = `pointOnCurve -pr $para -p $Dup_Crv[0]`;
+        //float $Pos[] = `pointOnCurve -pr $para -p $DupCrv_Shape[0]`;
+        $JntChain[size($JntChain)] = `joint -p $Pos[0] $Pos[1] $Pos[2]`;
+    }
+    parent -w $JntChain[0];
+    joint -e -oj xyz -sao yup $JntChain;
+    string $ikHndl[] = `ikHandle -sj $JntChain[0] -ee $JntChain[size($JntChain) - 1] -ccv 0 -c $Dup_Crv[0] -sol "ikSplineSolver"`;
+    select $ikHndl[0];
+    delete $ikHndl[0];
+    makeIdentity $JntChain[0];
+}
+
+JointChainOnCrv($JointNo = 7,$Curve = "curve1");
