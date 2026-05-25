@@ -1,0 +1,223 @@
+ribbonSetupUI();
+
+global proc ribbonSetupUI()
+{
+    if(`window -exists RibbonSetupUI`)
+    {
+        deleteUI RibbonSetupUI;
+    }
+    
+    window -title "RibbonSetupUI" RibbonSetupUI;
+    //Input for nurbs surface creation
+    columnLayout  -rs 4 NurbsCreation;
+        text -l "Nurbs Surface Creation";
+        //intFieldGrp -l "No. of Divisions:" divisionIntField;
+        textFieldGrp -l "Surface Name:" surfaceName;
+       
+        floatFieldGrp -l "Width:" widthField;
+  
+        floatFieldGrp -l "Length:" lengthField;
+      
+        //intFieldGrp -l "U patches:" Upatches;
+        intFieldGrp -l "No. of Divisions:" Upatches;
+     
+        //intFieldGrp -l "V patches:" Vpatches;
+        
+        optionMenu -l "Axis:" Axis;
+        menuItem -l "x" x;
+        menuItem -l "y" y;
+        menuItem -l "z" z;
+        menuItem -l "-x" x2;
+        menuItem -l "-y" y2;
+        menuItem -l "-z" z2;
+        
+        text -l "Follicle creation";
+        //intFieldGrp -l "U Count:" Ucount;
+        //intField Ucount;
+        //intFieldGrp -l "V Count:" Vcount;
+        //intField Vcount;
+        checkBox -l "Edge bounded:" edgeBounded;
+        
+        checkBox -l "Controls:" controls;
+        //int $check = `checkBox -q -v edgeBounded`;
+        
+        //button -l "Generate" -c ("ribbonSetup(`intFieldGrp -q -v1 divisionIntField`, `floatFieldGrp -q -v1 widthField`, `floatFieldGrp -q -v1 lengthField`, `intFieldGrp -q -v1 Upatches`, `intFieldGrp -q -v1 Vpatches`, `optionMenu -q -v Axis`, `intFieldGrp -q -v1 Ucount`, `intFieldGrp -q -v1 Vcount`, `checkBox -q -v edgeBounded`)") Generate;
+        //button -l "Generate" -c ("ribbonSetup(`textFieldGrp -q -text surfaceName`, `floatFieldGrp -q -v1 widthField`, `floatFieldGrp -q -v1 lengthField`, `intFieldGrp -q -v1 Upatches`, `intFieldGrp -q -v1 Vpatches`, `optionMenu -q -v Axis`, `intFieldGrp -q -v1 Ucount`, `intFieldGrp -q -v1 Vcount`, `checkBox -q -v edgeBounded`)") Generate;
+        button -l "Generate" -c ("ribbonSetup(`textFieldGrp -q -text surfaceName`, `floatFieldGrp -q -v1 widthField`, `floatFieldGrp -q -v1 lengthField`, `intFieldGrp -q -v1 Upatches`, `optionMenu -q -v Axis`, `checkBox -q -v edgeBounded`, `checkBox -q -v controls`)") Generate;
+        
+        showWindow RibbonSetupUI;
+}
+
+//global proc ribbonSetup(string $surfaceName, float $width, float $length, int $uPatches, int $vPatches, string $axis, int $uCount, int $vCount, int $check)
+global proc ribbonSetup(string $surfaceName, float $width, float $length, int $uPatches, string $axis, int $check, int $controls)
+{
+   
+    print ($surfaceName+"\n");
+    print ($width+"\n");
+    print ($length+"\n");
+    print ($uPatches+"\n");
+    //print ($vPatches+"\n");
+    print ($axis+"\n");
+    //print ($uCount+"\n");
+    //print ($vCount+"\n");
+    print ($check+"\n");
+    print ($controls+"\n");
+    
+    int $axisArray[];
+    if($axis == "x")
+    {
+        $axisArray[0] = 1;
+        $axisArray[1] = 0;
+        $axisArray[2] = 0;
+        
+    }
+    if($axis == "y")
+    {
+        $axisArray[0] = 0;
+        $axisArray[1] = 1;
+        $axisArray[2] = 0;
+        
+        
+    }
+    if($axis == "z")
+    {
+        $axisArray[0] = 0;
+        $axisArray[1] = 0;
+        $axisArray[2] = 1;
+       ;
+    }
+    if($axis == "-x")
+    {
+        $axisArray[0] = -1;
+        $axisArray[1] = 0;
+        $axisArray[2] = 0;
+    
+    }
+    if($axis == "-y")
+    {
+        $axisArray[0] = 0;
+        $axisArray[1] = -1;
+        $axisArray[2] = 0;
+       
+    }
+    if($axis == "-z")
+    {
+        $axisArray[0] = 0;
+        $axisArray[1] = 0;
+        $axisArray[2] = -1;
+       
+    }
+    
+    print $axisArray;
+    //nurbsPlane -p 0 0 0 -ax 0 0 1 -w 12.5 -lr 0.2 -d 3 -u 8 -v 1 -ch 1 -n "ribbon_nurbs"; //objectMoveCommand;
+    string $surface[] = `nurbsPlane -p 0 0 0 -ax $axisArray[0] $axisArray[1] $axisArray[2] -w $width -lr $length -d 3 -u $uPatches -v 1 -ch 1 -n $surfaceName`;
+    select -r $surface[0];
+    
+     
+    //createHair 9 1 10 0 0 1 0 5 0 1 2 1;
+    //createHair $uCount $vCount 10 0 0 $check 0 5 0 1 2 1;
+    createHair ($uPatches + 1) 1 10 0 0 $check 0 5 0 1 2 1;
+    select -cl;
+    
+    string $ribbonCurves[] = `listRelatives -typ "transform" -c ($surface[0]+"Follicle*")`;
+    print $ribbonCurves;
+    delete $ribbonCurves;
+    delete "hairSystem?";
+    delete "pfxHair*";
+    delete "nucleus*";
+    //createHair ($uPatches+1) $vCount 10 0 0 $check 0 5 0 1 2 1;
+    string $follicles[] = `ls -type "transform" ($surface[0]+"Follicle*")`;
+    //string $follicles[] = `ls -type "transform" ("m1_ribbonFollicle*")`;
+    print $follicles;
+    simpleJointCreation($surface[0],$follicles);
+    ////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////
+    ////////////////Controls Creation///////////////////////
+    ////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////
+
+    if($controls == 1)
+    {
+        int $sizeOfFolicles = `size($follicles)`;
+        int $middleFollicle = $sizeOfFolicles/2;
+        print ($sizeOfFolicles+"\n");
+        
+        print ($middleFollicle+"\n");
+        
+        string $startControl[] = `duplicate -n ($surfaceName+"_start_JNT") ($follicles[0]+"_JNT")`;
+        parent -w $startControl[0];
+        print ($startControl[0]+"\n");
+        string $middleControl[] = `duplicate -n ($surfaceName+"_middle_JNT") ($follicles[$middleFollicle]+"_JNT")`;
+        parent -w $middleControl[0];
+        print ($middleControl[0]+"\n");
+        string $endControl[] = `duplicate -n ($surfaceName+"_end_JNT") ($follicles[$sizeOfFolicles - 1]+"_JNT")`;
+        parent -w $endControl[0];
+        print ($endControl[0]+"\n");
+
+        string $tempConstraint[] = `pointConstraint $startControl[0] $endControl[0] $middleControl[0]`;
+        delete $tempConstraint[0];
+
+        skinCluster -mi 3 $startControl[0] $middleControl[0] $endControl[0] $surface[0];
+        
+        create_control({$startControl[0], $middleControl[0], $endControl[0]});
+    }
+}
+
+global proc simpleJointCreation(string $name, string $locs[])
+{
+    //select the locators then run the proc
+
+    int $lastLoc = `size($locs)`;
+
+    print $locs;
+     
+    for($each in $locs)
+    {
+        float $pos[] = `xform -q -ws -t $each`; // getting the translation values of the locators
+        joint -p $pos[0] $pos[1] $pos[2] -n ($each+"_JNT"); //creating the joints at the position of the locators
+        select -cl;
+        parent ($each+"_JNT") $each;
+        select -cl;
+    }
+            
+}
+
+global proc create_control(string $Objects[])
+{
+    for($all in $Objects)
+    {
+        string $group = `group -em -n ($all+"Offset_GRP")`;
+        
+        group -em -n ($all+"Con_GRP");
+        string $name = createCtrlShape($all, $name);
+        
+        parent ($all+"Con_GRP") $name;
+        parent $name $group;
+        matchTransform $group $all;
+        
+        parentConstraint ($all+"Con_GRP") $all;
+    }
+        
+}
+
+global proc string createCtrlShape(string $object, string $name)
+{
+    circle -c 0 0 0 -nr 0 1 0 -sw 360 -r 1 -d 3 -ut 0 -tol 0.01 -s 8 -ch 1; 
+    duplicate "nurbsCircle1";
+    setAttr "nurbsCircle2.rotateX" 90;
+    duplicate "nurbsCircle1";
+    setAttr "nurbsCircle3.rotateZ" 90;
+    
+    makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1 "nurbsCircle2";
+    
+    makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1 "nurbsCircle3";
+    
+    parent -r -s "nurbsCircleShape2" "nurbsCircle1";
+    parent -r -s "nurbsCircleShape3" "nurbsCircle1";
+    delete "nurbsCircle2";
+    delete "nurbsCircle3";
+    
+    $name = `rename "nurbsCircle1" ($object+"_CTRL")`;
+    return $name;
+    
+}
