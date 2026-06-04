@@ -12,9 +12,9 @@ ADD IK Stretch Setup
 ADD heel_Loc, inner_Loc and outer_Loc in template
 """
 def vfxQuadrupedLegIkSetup(startJoint, endEffector):
-    dupStartJnt = mc.duplicate(startJoint, name = startJoint+"_IK")
+    dupStartJnt = mc.duplicate(startJoint, name = startJoint+"_IK") # Duplicating the joint chain for IK setup.
 
-    ikChain = mc.listRelatives(dupStartJnt[0], ad = True, f = True, type = "joint")
+    ikChain = mc.listRelatives(dupStartJnt[0], ad = True, f = True, type = "joint") 
     #ikChain.append(dupStartJnt[0])
     print(ikChain)
     
