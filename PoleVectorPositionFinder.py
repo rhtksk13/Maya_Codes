@@ -48,7 +48,7 @@ class poleVector(ompx.MPxCommand):
     # parsing the arguments
     def argumentParse(self, argList):
         syntax = self.syntax()
-        mArgDataBase = om.MArgDatabase(syntax, argList)
+        mArgDataBase = om.MArgDatabase(syntax, argList) # Creating the MArgDataBase for syntaxing 
 
         if mArgDataBase.isFlagSet(kStartFlag):
             self.startSparse = mArgDataBase.flagArgumentString(kStartFlag, 0)
